@@ -28,12 +28,16 @@ public class Lexer {
 		int len;           /* トークンの長さ */
 	}
 	
-	static final int CT_P = 0;
-	static final int CT_X = 1;
-	static final int CT_0 = 2;
-	static final int CT_1 = 3;
-	static final int CT_A = 4;
+	static final int CT_P = 4;
+	static final int CT_X = 3;
+	static final int CT_0 = 0;
+	static final int CT_1 = 1;
+	static final int CT_A = 2;
 	static final int CT_OTHER = 5;
+	static final int TYPE_INT = 0;
+	static final int TYPE_DEC = 1;
+	static final int TYPE_ERR = 2;
+	static final int STATE_OUT_OF_BOUNDS = 8;
 
 	/*
 	 * 文字を分類する
@@ -53,12 +57,37 @@ public class Lexer {
 		/* TODO */
 		/* 状態遷移表を作る */
 		/*   delta[現状態][入力記号] */
-
+		
 		/*  P  X  0  1  A  OTHER */
 		/*{ ?, ?, ?, ?, ?, ?}, /* 状態0 */
 		/*{ ?, ?, ?, ?, ?, ?}, /* 状態1 */
 		/*...*/
+		{1,	2, 7, 8, 5, 8},
+		{3, 3, 7, 6, 4, 8},
+		{2, 2, 7, 8, 4, 8},
+		{3, 3, 7, 8, 8, 8},
+		{4, 4, 8, 8, 8, 8},
+		{4, 4, 8, 8, 8, 8},
+		{7, 7, 7, 8, 8, 8},
+		{7, 7, 7, 8, 8, 8}
 	};
+
+	int[] stateType = {
+		/* stateType[現状態] */
+		TYPE_ERR,	TYPE_INT,	TYPE_INT, TYPE_ERR, 
+		TYPE_DEC, TYPE_ERR, TYPE_ERR, TYPE_INT, 
+		TYPE_ERR
+	};
+
+	String getTokenType(int tokenNumber) {
+		switch (tokenNumber){
+			case TYPE_INT:
+				return Token.TYPE_INT;
+			case TYPE_DEC:
+				return Token.TYPE_DEC;
+		}
+		return Token.TYPE_ERR;
+	}
 
 	/*
 	 * 文字列 str の start 文字目から字句解析しトークンを一つ返す
@@ -84,6 +113,12 @@ public class Lexer {
 			/* TODO */
 			/* 行先がなければループを抜ける */
 			/* 行先が受理状態であれば「最後の受理状態」を更新する */
+			if (stateType[nextState] != TYPE_ERR) {
+				acceptMarker = getTokenType(stateType[nextState]);
+				acceptPos = p;
+			}
+			if (nextState == STATE_OUT_OF_BOUNDS)
+				break;
 
 			currentState = nextState;
 		}
